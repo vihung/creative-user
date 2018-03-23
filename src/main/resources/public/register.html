@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- Required meta tags -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+  integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+<title>Sign Up</title>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Sign Up</h1>
+
+    <form id="formRegister" class="needs-validation">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <h2 class="card-title">Personal details</h2>
+              <div class="form-group">
+                <label for="inputFirstName">First Name *</label> <input type="text" class="form-control" id="inputFirstName" placeholder="Enter first name"
+                  maxlength="40" required>
+                <div class="invalid-feedback">Please provide a first name</div>
+              </div>
+              <div class="form-group">
+                <label for="inputLastName">Last Name *</label> <input type="text" class="form-control" id="inputLastName" placeholder="Enter last name"
+                  maxlength="40" required>
+              </div>
+              <div class="form-group">
+                <label for="inputNickname">Nickname *</label> <input type="text" class="form-control" id="inputNickname" placeholder="Enter nickname"
+                  maxlength="8" required> <small id="mobileHelp" class="form-text text-muted">This will be seen by friends in your network.</small>
+              </div>
+              <div class="form-group">
+                <label for="inputMobile">Mobile Phone</label> <input type="tel" class="form-control" id="inputMobile" placeholder="Enter mobile phone number">
+                <small id="mobileHelp" class="form-text text-muted">We'll never share your mobile phone number with anyone else.</small>
+              </div>
+            </div>
+            <!-- end personal card-body -->
+          </div>
+          <!-- end card -->
+        </div>
+        <!-- end col -->
+        <br />
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <h2 class="card-title">Credentials</h2>
+              <div class="form-group">
+                <label for="inputEmail">Email Address *</label> <input type="email" class="form-control" id="inputEmail" placeholder="Enter email address"
+                  required> <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+              </div>
+              <div class="form-group">
+                <label for="inputPassword">Password</label> <input type="password" class="form-control" id="inputPassword" placeholder="Password" required>
+              </div>
+              <button type="submit" id="buttonSignUp" class="btn btn-primary">Sign Up</button>
+              <small id="submitHelp" class="form-text text-muted">Already Signed up? Please <a href="./login.html">Sign In</a> instead</small>
+            </div>
+          </div>
+        </div>
+        <!-- end second col -->
+      </div>
+      <!-- end row -->
+    </form>
+    <!-- end registration form -->
+  </div>
+  <!-- end container -->
+  <!-- Optional JavaScript -->
+  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+  <script type="text/javascript" src="./register.js"></script>
+
+  <script type="text/javascript">
+			$(document).ready(function() {
+				$("#inputFirstName").change({
+					inputFirstName : $("#inputFirstName"),
+					inputLastName : $("#inputLastName"),
+					inputNickname : $("#inputNickname")
+				}, onFirstNameChange);
+				$("#inputLastName").change({
+					inputFirstName : $("#inputFirstName"),
+					inputLastName : $("#inputLastName"),
+					inputNickname : $("#inputNickname")
+				}, onLastNameChange)
+				$("#inputNickname").change({
+                    inputFirstName : $("#inputFirstName"),
+                    inputLastName : $("#inputLastName"),
+                    inputNickname : $("#inputNickname")
+                }, onNicknameChange)
+				$("#formRegister").submit(onRegisterFormSubmit)
+			})
+		</script>
+</body>
+</html>
