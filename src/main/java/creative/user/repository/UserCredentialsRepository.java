@@ -36,6 +36,13 @@ public class UserCredentialsRepository {
         return 0;
     }
 
+    public void delete(final Iterable<? extends UserCredentials> pUserCredentialss) {
+        for (final UserCredentials userCredentials : pUserCredentialss) {
+            delete(userCredentials);
+        }
+
+    }
+
     public void delete(final String pUserCredentialsId) {
         final UserCredentials userCredentials = findOne(pUserCredentialsId);
         delete(userCredentials);
@@ -45,13 +52,6 @@ public class UserCredentialsRepository {
     public void delete(final UserCredentials pUserCredentials) {
         final DynamoDBMapper mapper = new DynamoDBMapper(client);
         mapper.delete(pUserCredentials);
-
-    }
-
-    public void delete(final Iterable<? extends UserCredentials> pUserCredentialss) {
-        for (final UserCredentials userCredentials : pUserCredentialss) {
-            delete(userCredentials);
-        }
 
     }
 
@@ -75,29 +75,6 @@ public class UserCredentialsRepository {
         return userCredentials;
     }
 
-    public UserCredentials findOne(final String pId) {
-        final DynamoDBMapper mapper = new DynamoDBMapper(client);
-        log.debug("findOne(): Invoked");
-        final UserCredentials userCredentials = mapper.load(UserCredentials.class, pId);
-        log.debug("findOne(): Returning userCredentials=" + userCredentials);
-        return userCredentials;
-    }
-
-    public <S extends UserCredentials> S save(final S pUserCredentials) {
-        final DynamoDBMapper mapper = new DynamoDBMapper(client);
-        mapper.save(pUserCredentials);
-        return pUserCredentials;
-    }
-
-    public <S extends UserCredentials> Iterable<S> save(final Iterable<S> pUserCredentials) {
-        final List<UserCredentials> ids = new ArrayList<UserCredentials>();
-
-        for (final UserCredentials userCredentials : pUserCredentials) {
-            ids.add(save(userCredentials));
-        }
-        return null;
-    }
-
     public UserCredentials findByEmail(final String pEmail) {
         final DynamoDBMapper mapper = new DynamoDBMapper(client);
         log.debug("findByEmail(): Invoked. pEmail=" + pEmail);
@@ -118,6 +95,51 @@ public class UserCredentialsRepository {
 
         log.debug("findByEmail(): Returning userCredentials=" + userCredentials);
         return userCredentials;
+    }
+
+    public UserCredentials findByUserId(final String pUserId) {
+        final DynamoDBMapper mapper = new DynamoDBMapper(client);
+        log.debug("findByUserId(): Invoked. pUserId=" + pUserId);
+        final Map<String, AttributeValue> eav = new HashMap<String, AttributeValue>();
+        eav.put(":userId", new AttributeValue().withS(pUserId));
+
+        final DynamoDBScanExpression scanExpression = new DynamoDBScanExpression().withFilterExpression("userId = :userId").withExpressionAttributeValues(eav);
+
+        log.debug("findByUserId(): scanExpression=" + scanExpression);
+        final List<UserCredentials> userCredentialsList = mapper.scan(UserCredentials.class, scanExpression);
+
+        UserCredentials userCredentials;
+        if (userCredentialsList.isEmpty()) {
+            userCredentials = null;
+        } else {
+            userCredentials = userCredentialsList.get(0);
+        }
+
+        log.debug("findByUserId(): Returning userCredentials=" + userCredentials);
+        return userCredentials;
+    }
+
+    public UserCredentials findOne(final String pId) {
+        final DynamoDBMapper mapper = new DynamoDBMapper(client);
+        log.debug("findOne(): Invoked");
+        final UserCredentials userCredentials = mapper.load(UserCredentials.class, pId);
+        log.debug("findOne(): Returning userCredentials=" + userCredentials);
+        return userCredentials;
+    }
+
+    public <S extends UserCredentials> Iterable<S> save(final Iterable<S> pUserCredentials) {
+        final List<UserCredentials> ids = new ArrayList<UserCredentials>();
+
+        for (final UserCredentials userCredentials : pUserCredentials) {
+            ids.add(save(userCredentials));
+        }
+        return null;
+    }
+
+    public <S extends UserCredentials> S save(final S pUserCredentials) {
+        final DynamoDBMapper mapper = new DynamoDBMapper(client);
+        mapper.save(pUserCredentials);
+        return pUserCredentials;
     }
 
 }

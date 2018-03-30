@@ -51,6 +51,7 @@
 
                 <button id="buttonEditProfile" class="btn btn-primary">Edit</button>
                 <input type="submit" id="buttonUpdateProfile" class="btn btn-primary" disabled value="Update">
+                <button id="buttonCancelEditProfile" class="btn btn-primary" disabled>Cancel</button>
               </form>
 
             </div>
@@ -108,6 +109,8 @@
         loadUserData();
         $("#buttonSignOut").click(onSignOut);
         $("#buttonEditProfile").click(onEditProfile);
+        $("#buttonCancelEditProfile").hide();
+        $("#buttonCancelEditProfile").click(onEditProfileCancel);
         $("#buttonUpdateProfile").hide();
         $("#formEditProfile").submit(onUpdateProfileFormSubmit);
 
@@ -117,7 +120,7 @@
         $("#user-lastName").change({
           form : $("#formEditProfile")
         }, onFormFieldChange);
-        $("#user-nickame").change({
+        $("#user-nickname").change({
           form : $("#formEditProfile")
         }, onFormFieldChange);
       });

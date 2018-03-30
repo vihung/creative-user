@@ -5,39 +5,30 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 
 public class RegistrationRequest {
 
+    private String mEmail;
+
+    private String mFirstName;
+    private String mLastName;
+    private String mMobile;
+    private String mNickname;
+    private String mPassword;
+
     public RegistrationRequest() {
         super();
     }
 
-    private String mFirstName;
-    private String mLastName;
-    private String mNickname;
-    private String mMobile;
-    private String mEmail;
-    private String mPassword;
-
-    @Override
-    public String toString() {
-        return ToStringBuilder.reflectionToString(this);
+    /**
+     * @return the email
+     */
+    public String getEmail() {
+        return mEmail;
     }
 
-    @Override
-    public int hashCode() {
-        return HashCodeBuilder.reflectionHashCode(17, 37, this);
-    }
     /**
      * @return the firstName
      */
     public String getFirstName() {
         return mFirstName;
-    }
-
-    /**
-     * @param pFirstName
-     *            the firstName to set
-     */
-    public void setFirstName(final String pFirstName) {
-        mFirstName = pFirstName;
     }
 
     /**
@@ -48,11 +39,10 @@ public class RegistrationRequest {
     }
 
     /**
-     * @param pLastName
-     *            the lastName to set
+     * @return the mobile
      */
-    public void setLastName(final String pLastName) {
-        mLastName = pLastName;
+    public String getMobile() {
+        return mMobile;
     }
 
     /**
@@ -63,33 +53,15 @@ public class RegistrationRequest {
     }
 
     /**
-     * @param pNickame
-     *            the nickame to set
+     * @return the password
      */
-    public void setNickname(final String pNickame) {
-        mNickname = pNickame;
+    public String getPassword() {
+        return mPassword;
     }
 
-    /**
-     * @return the mobile
-     */
-    public String getMobile() {
-        return mMobile;
-    }
-
-    /**
-     * @param pMobile
-     *            the mobile to set
-     */
-    public void setMobile(final String pMobile) {
-        mMobile = pMobile;
-    }
-
-    /**
-     * @return the email
-     */
-    public String getEmail() {
-        return mEmail;
+    @Override
+    public int hashCode() {
+        return HashCodeBuilder.reflectionHashCode(17, 37, this);
     }
 
     /**
@@ -101,10 +73,35 @@ public class RegistrationRequest {
     }
 
     /**
-     * @return the password
+     * @param pFirstName
+     *            the firstName to set
      */
-    public String getPassword() {
-        return mPassword;
+    public void setFirstName(final String pFirstName) {
+        mFirstName = pFirstName;
+    }
+
+    /**
+     * @param pLastName
+     *            the lastName to set
+     */
+    public void setLastName(final String pLastName) {
+        mLastName = pLastName;
+    }
+
+    /**
+     * @param pMobile
+     *            the mobile to set
+     */
+    public void setMobile(final String pMobile) {
+        mMobile = pMobile;
+    }
+
+    /**
+     * @param pNickame
+     *            the nickame to set
+     */
+    public void setNickname(final String pNickame) {
+        mNickname = pNickame;
     }
 
     /**
@@ -113,6 +110,11 @@ public class RegistrationRequest {
      */
     public void setPassword(final String pPassword) {
         mPassword = pPassword;
+    }
+
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
     }
 
 }

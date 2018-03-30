@@ -10,6 +10,36 @@ function loadUserData() {
   getCredentialsData();
 }
 
+function enableAndShowButton($button) {
+  console.log("enableAndShowButton(): Invoked", $button);
+  $button.prop("disabled", false);
+  $button.show();
+}
+
+function disableAndHideButton($button) {
+  console.log("disableAndHideButton(): Invoked", $button);
+  $button.prop("disabled", true);
+  $button.hide();
+}
+
+function disableFormField(i, field) {
+  var $field = $(field);
+  console.log(i, $field)
+  $field.addClass("form-control-plaintext").removeClass("form-control").attr("readonly", true);
+}
+
+function enableFormField(i, field) {
+  var $field = $(field);
+  console.log(i, $field)
+  $field.addClass("form-control").removeClass("form-control-plaintext").attr("readonly", false);
+}
+
+function populateFormField($field, value, placeholder) {
+  $field.val(value);
+  $field.prop("defaultValue", value);
+  $field.attr("placeholder", placeholder);
+
+}
 function clearUserData() {
   $("#card-user #user-firstName").val("");
   $("#card-user #user-lastName").val("");
@@ -27,17 +57,9 @@ function clearCredentialsData() {
 function populateUserData(user) {
   if (user) {
     clearUserData()
-    $("#card-user #user-firstName").val(user.firstName);
-    $("#card-user #user-firstName").prop("defaultValue", user.firstName);
-    $("#card-user #user-firstName").attr("placeholder", "first name");
-    
-    $("#card-user #user-lastName").val(user.lastName);
-    $("#card-user #user-lastName").prop("defaultValue", user.lastName);
-    $("#card-user #user-lastName").attr("placeholder", "last name");
-    
-    $("#card-user #user-nickname").val(user.nickname);
-    $("#card-user #user-nickname").prop("defaultValue", user.nickname);
-    $("#card-user #user-nickname").attr("placeholder", "nickname");
+    populateFormField($("#card-user #user-firstName"), user.firstName, "first name")
+    populateFormField($("#card-user #user-lastName"), user.lastName, "last name")
+    populateFormField($("#card-user #user-nickname"), user.nickname, "nickname");
     $("#card-user").show();
 
     clearContactData()
@@ -135,8 +157,7 @@ function onFormFieldChange(pEvent) {
       formDirty = true;
     }
   });
-  if(formDirty)
-    $("#buttonUpdateProfile").prop("disabled", false);
+  if (formDirty) $("#buttonUpdateProfile").prop("disabled", false);
   else
     $("#buttonUpdateProfile").prop("disabled", true);
 
@@ -146,16 +167,88 @@ function onEditProfile(pEvent) {
   console.log("onEditProfile(): Invoked", pEvent);
   console.log(this);
   pEvent.preventDefault();
+
   // enable form fields
-  $("#card-user input.form-control-plaintext").removeClass("form-control-plaintext").addClass("form-control").attr("readonly", false);
+  // $("#card-user input.form-control-plaintext").removeClass("form-control-plaintext").addClass("form-control").attr("readonly", false);
+  $("#card-user input.form-control-plaintext").each(enableFormField);
+
   $("#buttonEditProfile").prop("disabled", true);
   $("#buttonEditProfile").hide();
   $("#buttonUpdateProfile").show();
 
+  $("#buttonCancelEditProfile").prop("disabled", false);
+  $("#buttonCancelEditProfile").show();
+
+}
+
+function onEditProfileCancel(pEvent) {
+  console.log("onEditProfileCancel(): Invoked", pEvent);
+  console.log(this);
+  pEvent.preventDefault();
+
+  // disable form fields
+  $("#card-user input.form-control").each(disableFormField);
+
+  pEvent.target.form.reset();
+
+  disableAndHideButton($("#buttonUpdateProfile"));
+  disableAndHideButton($("#buttonCancelEditProfile"));
+  enableAndShowButton($("#buttonEditProfile"));
+}
+
+function onUpdateProfileSuccess(pUser) {
+  console.log("onUpdateProfileSuccess(): Invoked");
+  console.log(pUser);
+  populateFormField($("#user-firstName"), pUser.firstName);
+  populateFormField($("#user-lastName"), pUser.lastName);
+  populateFormField($("#user-nickname"), pUser.nickname);
+  
+  disableAndHideButton($("#buttonUpdateProfile"));
+  disableAndHideButton($("#buttonCancelEditProfile"));
+  enableAndShowButton($("#buttonEditProfile"));
+  $("#card-user input.form-control").each(disableFormField);
+}
+
+function onUpdateProfileFailure(pEvent) {
+  console.log("onUpdateProfileFailure(): Invoked");
+  console.log(pEvent);
 }
 
 function onUpdateProfileFormSubmit(pEvent) {
   console.log("onUpdateProfileFormSubmit(): Invoked");
   console.log(pEvent);
   pEvent.preventDefault();
+
+  var $form = $(this);
+
+  // Extract form fields
+  var firstName = $form.find('#user-firstName').val();
+  console.log("onUpdateProfileFormSubmit(): firstName=" + firstName);
+
+  var lastName = $form.find('#user-lastName').val();
+  console.log("onUpdateProfileFormSubmit(): lastName=" + lastName);
+
+  var nickname = $form.find('#user-nickname').val();
+  console.log("onUpdateProfileFormSubmit(): nickname=" + nickname);
+
+  var updateProfileRequest = {
+    "firstName" : firstName,
+    "lastName" : lastName,
+    "nickname" : nickname
+  }
+
+  // AJAX POST to update profile URL
+  $.ajax({
+    headers : {
+      'Accept' : 'application/json',
+      'Content-Type' : 'application/json'
+    },
+    url : URL_USER,
+    type : "PUT",
+    data : JSON.stringify(updateProfileRequest),
+    statusCode : {
+      200 : onUpdateProfileSuccess,
+    }
+  }).fail(onUpdateProfileFailure);
+
 }
