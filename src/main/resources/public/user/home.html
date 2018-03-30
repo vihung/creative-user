@@ -18,21 +18,54 @@
     <div class="row">
       <div class="col-md-6">
         <div class="card" id="card-user">
+          <h5 class="card-header">User Profile</h5>
           <div class="card-body">
-            <h5 class="card-title">User Profile</h5>
             <div class="card-text">
-              <dl class="dl-horizontal">
-                <dt>First Name</dt>
-                <dd id="user-firstName"></dd>
+              <form id="formEditProfile" class="form">
+                <div class="form-group row">
+                  <div class="col-4">
+                    <label class="col-form-label" for="user-firstName"><strong>First Name</strong></label>
+                  </div>
+                  <div class="col-8">
+                    <input class="form-control-plaintext" readonly id="user-firstName" placeholder="loading...">
+                  </div>
+                </div>
 
-                <dt>Last Name</dt>
-                <dd id="user-lastName"></dd>
+                <div class="form-group row">
+                  <div class="col-4">
+                    <label class="col-form-label" for="user-lastName"><strong>Last Name</strong></label>
+                  </div>
+                  <div class="col-8">
+                    <input class="form-control-plaintext" readonly id="user-lastName" placeholder="loading...">
+                  </div>
+                </div>
 
-                <dt>Nickame</dt>
-                <dd id="user-nickname"></dd>
+                <div class="form-group row">
+                  <div class="col-4">
+                    <label class="col-form-label" for="user-nickname"><strong>Nickname</strong></label>
+                  </div>
+                  <div class="col-8">
+                    <input class="form-control-plaintext" readonly id="user-nickname" placeholder="loading...">
+                  </div>
+                </div>
 
-                <dt>Mobile</dt>
-                <dd id="user-mobile"></dd>
+                <button id="buttonEditProfile" class="btn btn-primary">Edit</button>
+                <input type="submit" id="buttonUpdateProfile" class="btn btn-primary" disabled value="Update">
+              </form>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- end col -->
+      <div class="col-md-6">
+        <div class="card" id="card-contact">
+          <h5 class="card-header">Contacts</h5>
+          <div class="card-body">
+            <div class="card-text">
+              <dl class="row">
+                <dt class="col-4">Mobile</dt>
+                <dd class="col-8" id="contact-mobile"></dd>
               </dl>
             </div>
           </div>
@@ -41,12 +74,12 @@
       <!-- end col -->
       <div class="col-md-6">
         <div class="card" id="card-creds">
+          <h5 class="card-header">Credentials</h5>
           <div class="card-body">
-            <h5 class="card-title">Credentials</h5>
             <div class="card-text">
-              <dl class="dl-horizontal">
-                <dt>Email</dt>
-                <dd id="cred-email"></dd>
+              <dl class="row">
+                <dt class="col-4">Email</dt>
+                <dd class="col-8" id="cred-email"></dd>
               </dl>
             </div>
           </div>
@@ -56,7 +89,6 @@
     </div>
     <!-- end row -->
     <form>
-      <button id="buttonEditProfile" class="btn btn-primary">Edit Profile</button>
       <button id="buttonChangePassword" class="btn btn-primary">Change Password</button>
       <button id="buttonSignOut" class="btn btn-primary">Sign Out</button>
     </form>
@@ -72,10 +104,23 @@
   <script type="text/javascript" src="./home.js"></script>
 
   <script type="text/javascript">
-			$(document).ready(function() {
-				loadUserData();
-				$("#buttonSignOut").click(onSignOut);
-			});
-		</script>
+      $(document).ready(function() {
+        loadUserData();
+        $("#buttonSignOut").click(onSignOut);
+        $("#buttonEditProfile").click(onEditProfile);
+        $("#buttonUpdateProfile").hide();
+        $("#formEditProfile").submit(onUpdateProfileFormSubmit);
+
+        $("#user-firstName").change({
+          form : $("#formEditProfile")
+        }, onFormFieldChange);
+        $("#user-lastName").change({
+          form : $("#formEditProfile")
+        }, onFormFieldChange);
+        $("#user-nickame").change({
+          form : $("#formEditProfile")
+        }, onFormFieldChange);
+      });
+    </script>
 </body>
 </html>
