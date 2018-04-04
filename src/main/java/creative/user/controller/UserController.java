@@ -1,16 +1,14 @@
 package creative.user.controller;
 
-import java.util.Calendar;
-
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,9 +25,8 @@ import creative.user.model.RegistrationRequest;
 import creative.user.model.UpdateUserRequest;
 import creative.user.model.User;
 import creative.user.model.UserCredentials;
-import creative.user.repository.AccessTokenRepository;
-import creative.user.repository.UserCredentialsRepository;
-import creative.user.repository.UserRepository;
+import creative.user.service.UserService;
+import creative.user.validator.UserValidator;
 
 @RestController
 @RequestMapping(value = "/api")
@@ -37,7 +34,7 @@ public class UserController {
     private static final Log log = LogFactory.getLog(UserController.class);
 
     @Autowired
-    private AccessTokenRepository mAccessTokenRepository;
+    private MessageSource messageSource;
 
     @Autowired
     private HttpServletRequest mRequest;
@@ -46,32 +43,18 @@ public class UserController {
     private HttpServletResponse mResponse;
 
     @Autowired
-    private UserCredentialsRepository mUserCredentialsRepository;
+    private UserService mUserService;
 
     @Autowired
-    private UserRepository mUserRepository;
+    private UserValidator mUserValidator;
 
     public UserController() {
         super();
     }
 
-    private final boolean checkEmailExists(final String pEmail) {
-        log.debug("checkEmailExists(): Invoked. pEmail=" + pEmail);
-        if (null == getUserCredentialsRepository().findByEmail(pEmail)) return false;
-        else
-            return true;
-    }
-
-    private final boolean checkNicknameExists(final String pNickname) {
-        log.debug("checkNicknameExists(): Invoked. pNickname=" + pNickname);
-        if (null == getUserRepository().findByNickname(pNickname)) return false;
-        else
-            return true;
-    }
-
     private boolean checkPasswordCorrect(final LoginRequest pLoginRequest) {
         log.debug("checkPasswordCorrect(): Invoked. pLoginRequest=" + pLoginRequest);
-        final UserCredentials creds = getUserCredentialsRepository().findByEmail(pLoginRequest.getEmail());
+        final UserCredentials creds = getUserService().findUserCredentialsByEmail(pLoginRequest.getEmail());
         final String actualHashedPassword = creds.getHashedPassword();
         log.debug("checkPasswordCorrect(): actualHashedPassword=" + actualHashedPassword);
         final String candidateHashedPassword = DigestUtils.sha256Hex(pLoginRequest.getPassword());
@@ -80,36 +63,33 @@ public class UserController {
 
     }
 
-    /**
-     * @return the accessTokenRepository
-     */
-    public AccessTokenRepository getAccessTokenRepository() {
-        return mAccessTokenRepository;
-    }
-
     @RequestMapping(value = "/user/current", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity getCurrentUser() {
         final User user = (User) mRequest.getAttribute("currentUser");
-        if (user != null) return new ResponseEntity(user, HttpStatus.OK);
-        else {
-            final ErrorResponse errorResponse = new ErrorResponse(HttpStatus.NOT_FOUND.value(), "No current user found");
-            return new ResponseEntity(errorResponse, HttpStatus.NOT_FOUND);
-        }
+        if (user == null) {
+            final String messageKey = "ERR_NO_CURRENT_USER";
+            final String messageValue = messageSource.getMessage(messageKey, null, mRequest.getLocale());
+            final ErrorResponse errorResponse = new ErrorResponse(messageKey, messageValue);
+            return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.NOT_FOUND);
+        } else
+            return new ResponseEntity<User>(user, HttpStatus.OK);
     }
 
     @RequestMapping(value = "/user/current/credentials", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public ResponseEntity getCurrentUserCredentials() {
         final User user = (User) mRequest.getAttribute("currentUser");
-        if (user != null) {
-            final String userId = user.getId();
-            final UserCredentials creds = getUserCredentialsRepository().findByUserId(userId);
-            return new ResponseEntity(creds, HttpStatus.OK);
-        } else {
-            final ErrorResponse errorResponse = new ErrorResponse(HttpStatus.NOT_FOUND.value(), "No current user found");
+        if (user == null) {
+            final String messageKey = "ERR_NO_CURRENT_USER";
+            final String messageValue = messageSource.getMessage(messageKey, null, mRequest.getLocale());
+            final ErrorResponse errorResponse = new ErrorResponse(messageKey, messageValue);
             return new ResponseEntity(errorResponse, HttpStatus.NOT_FOUND);
 
+        } else {
+            final String userId = user.getId();
+            final UserCredentials creds = getUserService().findUserCredentialsByUserId(userId);
+            return new ResponseEntity(creds, HttpStatus.OK);
         }
     }
 
@@ -120,31 +100,29 @@ public class UserController {
         final User currentUser = (User) mRequest.getAttribute("currentUser");
         log.debug("getUserById(): currentUser.id=" + currentUser.getId());
         if (currentUser != null) if (!currentUser.getId().equals(pUserId)) {
-            final ErrorResponse errorResponse = new ErrorResponse(HttpStatus.FORBIDDEN.value(), "Current user cannot access user with id " + pUserId);
+            final String messageKey = "ERR_USER_ACCESS_FORBIDDEN";
+            final String messageValue = messageSource.getMessage(messageKey, new Object[] { pUserId }, mRequest.getLocale());
+            final ErrorResponse errorResponse = new ErrorResponse(messageKey, messageValue);
             return new ResponseEntity(errorResponse, HttpStatus.FORBIDDEN);
         }
 
-        final User user = getUserRepository().findOne(pUserId);
-        if (user != null) return new ResponseEntity(user, HttpStatus.OK);
-        else {
-            final ErrorResponse errorResponse = new ErrorResponse(HttpStatus.NOT_FOUND.value(), "No user found for id " + pUserId);
+        final User user = getUserService().getUser(pUserId);
+        if (user == null) {
+            final String messageKey = "ERR_USER_NOT_FOUND";
+            final String messageValue = messageSource.getMessage(messageKey, new Object[] { pUserId }, mRequest.getLocale());
+            final ErrorResponse errorResponse = new ErrorResponse(messageKey, messageValue);
             return new ResponseEntity(errorResponse, HttpStatus.NOT_FOUND);
-        }
+        } else
+            return new ResponseEntity(user, HttpStatus.OK);
 
     }
 
-    /**
-     * @return the userCredentialsRepository
-     */
-    public UserCredentialsRepository getUserCredentialsRepository() {
-        return mUserCredentialsRepository;
+    public UserService getUserService() {
+        return mUserService;
     }
 
-    /**
-     * @return the userService
-     */
-    public UserRepository getUserRepository() {
-        return mUserRepository;
+    public UserValidator getUserValidator() {
+        return mUserValidator;
     }
 
     /**
@@ -161,48 +139,45 @@ public class UserController {
     public ResponseEntity login(@RequestBody final LoginRequest pLoginRequest) {
         log.debug("login(): Invoked");
         log.debug("login(): pLoginRequest=" + pLoginRequest);
-        final boolean requestValid = validateLoginRequest(pLoginRequest);
+        final boolean requestValid = getUserValidator().validateLoginRequest(pLoginRequest);
         if (!requestValid) {
-            final ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Login request invalid. Check all fields and try again");
+            final String messageKey = "ERR_LOGIN_REQUEST_INVALID";
+            final String messageValue = messageSource.getMessage(messageKey, new Object[] {}, mRequest.getLocale());
+            final ErrorResponse errorResponse = new ErrorResponse(messageKey, messageValue);
             return new ResponseEntity(errorResponse, HttpStatus.BAD_REQUEST);
         } else {
-            final boolean emailExists = checkEmailExists(pLoginRequest.getEmail());
+            final boolean emailExists = getUserService().checkEmailExists(pLoginRequest.getEmail());
             if (!emailExists) {
                 log.debug("login(): Email address unknown");
-                final ErrorResponse errorResponse = new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "Email address unknown");
+                final String messageKey = "ERR_EMAIL_UNKNOWN";
+                final String messageValue = messageSource.getMessage(messageKey, new Object[] {}, mRequest.getLocale());
+                final ErrorResponse errorResponse = new ErrorResponse(messageKey, messageValue);
                 return new ResponseEntity(errorResponse, HttpStatus.UNAUTHORIZED);
             }
 
             else if (!checkPasswordCorrect(pLoginRequest)) {
                 log.debug("login(): Password incorrect");
-                final ErrorResponse errorResponse = new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "Password incorrect");
+                final String messageKey = "ERR_PASSWORD_INCORRECT";
+                final String messageValue = messageSource.getMessage(messageKey, new Object[] {}, mRequest.getLocale());
+                final ErrorResponse errorResponse = new ErrorResponse(messageKey, messageValue);
                 return new ResponseEntity(errorResponse, HttpStatus.UNAUTHORIZED);
             } else {
 
                 try {
-                    // TODO: Load User by UserId
-                    final UserCredentials creds = getUserCredentialsRepository().findByEmail(pLoginRequest.getEmail());
+                    final UserCredentials creds = getUserService().findUserCredentialsByEmail(pLoginRequest.getEmail());
                     log.debug("login(): creds=" + creds);
                     final String userId = creds.getUserId();
-                    final User user = getUserRepository().findOne(userId);
+                    final User user = getUserService().getUser(userId);
                     log.debug("login(): user=" + user);
-                    // Create Access Token
-                    final AccessToken accessToken = new AccessToken(user.getId());
-                    final Calendar expiry = Calendar.getInstance();
-                    log.debug("registerUser(): now=" + expiry);
-                    expiry.add(Calendar.DAY_OF_MONTH, 7);
-                    log.debug("registerUser(): expiry=" + expiry);
-
-                    accessToken.setExpiryTimestamp(expiry.getTimeInMillis());
 
                     final String clientAddress = mRequest.getRemoteAddr();
                     log.debug("login(): clientAddress=" + clientAddress);
-                    accessToken.setClientAddress(clientAddress);
+
                     final String clientHostName = mRequest.getRemoteHost();
                     log.debug("login(): clientHostName=" + clientHostName);
-                    accessToken.setClientHostname(clientHostName);
-                    log.debug("login(): accessToken=" + accessToken);
-                    getAccessTokenRepository().save(accessToken);
+
+                    // Create Access Token
+                    final AccessToken accessToken = getUserService().createAccessToken(user, clientAddress, clientHostName);
 
                     final String tokenValue = accessToken.getTokenValue();
 
@@ -215,8 +190,10 @@ public class UserController {
 
                     return new ResponseEntity(user, HttpStatus.CREATED);
                 } catch (final Exception e) {
-                    log.error("Error registering user", e);
-                    final ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage());
+                    log.error("Error logging in", e);
+                    final String messageKey = "ERR_LOGIN";
+                    final String messageValue = messageSource.getMessage(messageKey, new Object[] {}, mRequest.getLocale());
+                    final ErrorResponse errorResponse = new ErrorResponse(messageKey, messageValue);
                     return new ResponseEntity(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
 
                 }
@@ -233,7 +210,7 @@ public class UserController {
         // set expiry to now
         accessToken.setExpiryTimestamp(System.currentTimeMillis());
         // save
-        getAccessTokenRepository().save(accessToken);
+        getUserService().save(accessToken);
 
         // get cookie
         // set maxage to 0
@@ -259,59 +236,56 @@ public class UserController {
     public ResponseEntity registerUser(@RequestBody final RegistrationRequest pRegistrationRequest) {
         log.debug("registerUser(): Invoked");
         log.debug("registerUser(): pRegistrationRequest=" + pRegistrationRequest);
-        final boolean requestValid = validateRegistrationRequest(pRegistrationRequest);
+        final boolean requestValid = getUserValidator().validateRegistrationRequest(pRegistrationRequest);
         if (!requestValid) {
-            final ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(),
-                    "Registration request invalid. Check all fields and try again");
+            final String messageKey = "ERR_REGISTRATION_REQUEST_INVALID";
+            final String messageValue = messageSource.getMessage(messageKey, new Object[] {}, mRequest.getLocale());
+            final ErrorResponse errorResponse = new ErrorResponse(messageKey, messageValue);
             return new ResponseEntity(errorResponse, HttpStatus.BAD_REQUEST);
         } else {
-            final boolean emailExists = checkEmailExists(pRegistrationRequest.getEmail());
-            final boolean nicknameExists = checkNicknameExists(pRegistrationRequest.getNickname());
+            final String email = pRegistrationRequest.getEmail();
+            final boolean emailExists = getUserService().checkEmailExists(email);
             if (emailExists) {
-                final ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(),
-                        "A user with this email address already exists. If you are already registered, then please sign in");
+                final String messageKey = "ERR_EMAIL_EXISTS";
+                final String messageValue = messageSource.getMessage(messageKey, new Object[] { email }, mRequest.getLocale());
+                final ErrorResponse errorResponse = new ErrorResponse(messageKey, messageValue);
                 return new ResponseEntity(errorResponse, HttpStatus.CONFLICT);
-            } else if (nicknameExists) {
-                final ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(),
-                        "A user with this nickname already exists. Please change the nickname and try again");
+            }
+            final String nickname = pRegistrationRequest.getNickname();
+            final boolean nicknameExists = getUserService().checkNicknameExists(nickname);
+            if (nicknameExists) {
+                final String messageKey = "ERR_NICKNAME_EXISTS";
+                final String messageValue = messageSource.getMessage(messageKey, new Object[] { nickname }, mRequest.getLocale());
+                final ErrorResponse errorResponse = new ErrorResponse(messageKey, messageValue);
                 return new ResponseEntity(errorResponse, HttpStatus.CONFLICT);
             } else {
                 try {
                     User user = new User();
                     user.setFirstName(pRegistrationRequest.getFirstName());
                     user.setLastName(pRegistrationRequest.getLastName());
-                    user.setNickname(pRegistrationRequest.getNickname());
+                    user.setNickname(nickname);
                     user.setMobile(pRegistrationRequest.getMobile());
                     log.debug("registerUser(): user=" + user);
 
-                    user = getUserRepository().save(user);
+                    user = getUserService().save(user);
                     log.debug("registerUser(): user=" + user);
 
                     UserCredentials creds = new UserCredentials();
-                    creds.setEmail(pRegistrationRequest.getEmail());
+                    creds.setEmail(email);
                     creds.setPassword(pRegistrationRequest.getPassword());
                     creds.setUserId(user.getId());
                     log.debug("registerUser(): creds=" + creds);
 
-                    creds = getUserCredentialsRepository().save(creds);
+                    creds = getUserService().save(creds);
                     log.debug("registerUser(): creds=" + creds);
-
-                    final AccessToken accessToken = new AccessToken(user.getId());
-                    final Calendar expiry = Calendar.getInstance();
-                    log.debug("registerUser(): now=" + expiry);
-                    expiry.add(Calendar.DAY_OF_MONTH, 7);
-                    log.debug("registerUser(): expiry=" + expiry);
-
-                    accessToken.setExpiryTimestamp(expiry.getTimeInMillis());
 
                     final String clientAddress = mRequest.getRemoteAddr();
                     log.debug("login(): clientAddress=" + clientAddress);
-                    accessToken.setClientAddress(clientAddress);
+
                     final String clientHostName = mRequest.getRemoteHost();
                     log.debug("login(): clientHostName=" + clientHostName);
-                    accessToken.setClientHostname(clientHostName);
 
-                    getAccessTokenRepository().save(accessToken);
+                    final AccessToken accessToken = getUserService().createAccessToken(user, clientAddress, clientHostName);
 
                     final String tokenValue = accessToken.getTokenValue();
 
@@ -325,7 +299,9 @@ public class UserController {
                     return new ResponseEntity(user, HttpStatus.CREATED);
                 } catch (final Exception e) {
                     log.error("Error registering user", e);
-                    final ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage());
+                    final String messageKey = "ERR_REGISTRATION";
+                    final String messageValue = messageSource.getMessage(messageKey, new Object[] {}, mRequest.getLocale());
+                    final ErrorResponse errorResponse = new ErrorResponse(messageKey, messageValue);
                     return new ResponseEntity(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
 
                 }
@@ -333,112 +309,31 @@ public class UserController {
         }
     }
 
-    /**
-     * @param pAccessTokenRepository
-     *            the accessTokenRepository to set
-     */
-    public void setAccessTokenRepository(final AccessTokenRepository pAccessTokenRepository) {
-        mAccessTokenRepository = pAccessTokenRepository;
+    public void setUserService(final UserService pUserService) {
+        mUserService = pUserService;
     }
 
-    /**
-     * @param pUserCredentialsRepository
-     *            the userCredentialsRepository to set
-     */
-    public void setUserCredentialsRepository(final UserCredentialsRepository pUserCredentialsRepository) {
-        mUserCredentialsRepository = pUserCredentialsRepository;
-    }
-
-    /**
-     * @param pUserRepository
-     *            the userService to set
-     */
-    public void setUserRepository(final UserRepository pUserRepository) {
-        mUserRepository = pUserRepository;
+    public void setUserValidator(final UserValidator pUserValidator) {
+        mUserValidator = pUserValidator;
     }
 
     @RequestMapping(value = "/user/current", method = RequestMethod.PUT, consumes = "application/json", produces = "application/json")
     @ResponseBody
     public ResponseEntity updateCurrentUser(@RequestBody final UpdateUserRequest pUpdateUserRequest) {
-        final boolean requestValid = validateUpdateUserRequest(pUpdateUserRequest);
+        final boolean requestValid = getUserValidator().validateUpdateUserRequest(pUpdateUserRequest);
         if (!requestValid) {
-            final ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(),
-                    "Update user request invalid. Check all fields and try again");
+            final String messageKey = "ERR_UPDATE_USER_REQUEST_INVALID";
+            final String messageValue = messageSource.getMessage(messageKey, new Object[] {}, mRequest.getLocale());
+            final ErrorResponse errorResponse = new ErrorResponse(messageKey, messageValue);
             return new ResponseEntity(errorResponse, HttpStatus.BAD_REQUEST);
         } else {
             User user = (User) mRequest.getAttribute("currentUser");
             user.setFirstName(pUpdateUserRequest.getFirstName());
             user.setLastName(pUpdateUserRequest.getLastName());
             user.setNickname(pUpdateUserRequest.getNickname());
-            user = getUserRepository().save(user);
+            user = getUserService().save(user);
             return new ResponseEntity(user, HttpStatus.OK);
         }
     }
 
-    private final boolean validateLoginRequest(final LoginRequest pLoginRequest) {
-        log.debug("validateLoginRequest(): Invoked");
-        boolean requestValid = true;
-
-        if (!validateStringField(pLoginRequest.getEmail())) {
-            requestValid = false;
-        } else if (!validateStringField(pLoginRequest.getPassword())) {
-            requestValid = false;
-        }
-
-        log.debug("validateLoginRequest(): Returning requestValid=" + requestValid);
-        return requestValid;
-    }
-
-    private final boolean validateRegistrationRequest(final RegistrationRequest pRegistrationRequest) {
-        log.debug("validateRegistrationRequest(): Invoked");
-        boolean requestValid = true;
-
-        if (!validateStringField(pRegistrationRequest.getFirstName())) {
-            requestValid = false;
-        } else if (!validateStringField(pRegistrationRequest.getLastName())) {
-            requestValid = false;
-        } else if (!validateStringField(pRegistrationRequest.getNickname())) {
-            requestValid = false;
-        } else if (!validateStringField(pRegistrationRequest.getMobile())) {
-            requestValid = false;
-        } else if (!validateStringField(pRegistrationRequest.getEmail())) {
-            requestValid = false;
-        } else if (!validateStringField(pRegistrationRequest.getPassword())) {
-            requestValid = false;
-        }
-
-        log.debug("validateRegistrationRequest(): Returning requestValid=" + requestValid);
-        return requestValid;
-    }
-
-    private boolean validateStringField(final String pStringValue) {
-        log.debug("validateStringField(): Invoked");
-        log.debug("validateStringField(): pStringValue=" + pStringValue);
-
-        if (StringUtils.isEmpty(pStringValue)) {
-            log.warn("validateStringField(): Empty");
-            return false;
-
-        } else if (pStringValue.length() > 40) {
-            log.warn("validateStringField(): Too long");
-            return false;
-        }
-        return true;
-    }
-
-    private final boolean validateUpdateUserRequest(final UpdateUserRequest pUpdateUserRequest) {
-        log.debug("validateUpdateUserRequest(): Invoked");
-        boolean requestValid = true;
-
-        if (!validateStringField(pUpdateUserRequest.getFirstName())) {
-            requestValid = false;
-        } else if (!validateStringField(pUpdateUserRequest.getLastName())) {
-            requestValid = false;
-        } else if (!validateStringField(pUpdateUserRequest.getNickname())) {
-            requestValid = false;
-        }
-
-        log.debug("validateUpdateUserRequest(): Returning requestValid=" + requestValid);
-        return requestValid;
-    }
 }

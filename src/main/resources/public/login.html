@@ -9,25 +9,31 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
   integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 
-<title>Sign In</title>
+<title class="message" data-message="TITLE_LOGIN">Sign In</title>
 </head>
 
 <body>
   <div class="container">
-    <h1>Sign In</h1>
-
+    <h1 class="message" data-message="TITLE_LOGIN">Sign In</h1>
+    <div id="errorAlert" class="alert alert-danger alert-dismissible fade show" role="alert" style="display: none">
+      <span id="errorText"></span>
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
     <form id="formLogin" class="needs-validation">
       <div class="row">
         <div class="col-md-12">
           <div class="card">
             <div class="card-body">
-              <h2 class="card-title">Credentials</h2>
+              <h2 class="card-title" data-message="PANEL_TITLE_CREDENTIALS">Credentials</h2>
               <div class="form-group">
-                <label for="inputEmail">Email Address *</label> <input type="email" class="form-control" id="inputEmail" placeholder="Enter email address"
-                  required> 
+                <label for="inputEmail" data-message="LABEL_EMAIL">Email Address *</label> 
+                <input type="email" class="form-control" id="inputEmail" placeholder="Enter email address" data-placeholder="LABEL_EMAIL" required> 
               </div>
               <div class="form-group">
-                <label for="inputPassword">Password</label> <input type="password" class="form-control" id="inputPassword" placeholder="Password" required>
+                <label for="inputPassword" data-message="LABEL_PASSWORD">Password</label> 
+                <input type="password" class="form-control" id="inputPassword" placeholder="Password" data-placeholder="LABEL_PASSWORD" required>
               </div>
               <button type="submit" id="buttonSignIn" class="btn btn-primary">Sign In</button>
                 <small id="submitHelp" class="form-text text-muted">Not Signed up yet? Please <a href="./register.html">Sign Up</a> instead</small>

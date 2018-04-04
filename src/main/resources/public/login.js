@@ -14,7 +14,10 @@ function onLoginSuccess(e) {
 function onLoginFailure(e) {
 	console.log("onLoginFailure(): Invoked")
 	console.log(e);
-	var errorMessage = e.statusText;
+	var errorMessage = e.responseJSON.errorMessage;
+	console.log(errorMessage);
+	$("#errorText").text(errorMessage);
+	$("#errorAlert").show();
 }
 
 function onLoginFormSubmit(e) {

@@ -6,6 +6,7 @@ package creative.user.filter;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -39,14 +40,14 @@ public class AuthFilter implements Filter {
     // Logger for this class
     private static final Log log = LogFactory.getLog(AuthFilter.class);
 
-    @Value("${authfilter.protected.includes}")
-    private String mIncludes;
+    @Autowired
+    private AccessTokenRepository mAccessTokenRepository;
 
     @Value("${authfilter.protected.excludes}")
     private String[] mExcludes;
 
-    @Autowired
-    private AccessTokenRepository mAccessTokenRepository;
+    @Value("${authfilter.protected.includes}")
+    private String mIncludes;
 
     @Autowired
     private UserRepository mUserRepository;
@@ -56,6 +57,23 @@ public class AuthFilter implements Filter {
      */
     public AuthFilter() {
         super();
+    }
+
+    private boolean currentRequestIsExcluded(final String pRequestUri) {
+        boolean excluded = false;
+
+        for (final String excludePattern : mExcludes) {
+            if (pRequestUri.startsWith(excludePattern)) {
+                excluded = true;
+                break;
+            }
+
+        }
+        return excluded;
+    }
+
+    private boolean currentRequestIsIncluded(final String requestUri) {
+        return requestUri.startsWith(mIncludes);
     }
 
     /**
@@ -76,6 +94,9 @@ public class AuthFilter implements Filter {
         final HttpServletRequest request = (HttpServletRequest) pRequest;
         final HttpServletResponse response = (HttpServletResponse) pResponse;
         final String requestUri = request.getRequestURI();
+
+        final Locale locale = request.getLocale();
+        log.debug("doFilter(): locale=" + locale);
 
         final boolean included = currentRequestIsIncluded(requestUri);
         final boolean excluded = currentRequestIsExcluded(requestUri);
@@ -140,16 +161,6 @@ public class AuthFilter implements Filter {
         }
     }
 
-    private void loadCurrentUser(final HttpServletRequest request, final AccessToken pAccessToken) {
-        final String userId = pAccessToken.getUserId();
-        final User user = getUserRepository().findOne(userId);
-        request.setAttribute("currentUser", user);
-    }
-
-    private void loadAccessToken(final HttpServletRequest request, final AccessToken pAccessToken) {
-        request.setAttribute("accessToken", pAccessToken);
-    }
-
     private Cookie extractAccessTokenCookie(final HttpServletRequest request) {
         Cookie atCookie = null;
         final Cookie[] cookies = request.getCookies();
@@ -169,21 +180,18 @@ public class AuthFilter implements Filter {
         return atCookie;
     }
 
-    private boolean currentRequestIsExcluded(final String pRequestUri) {
-        boolean excluded = false;
-
-        for (final String excludePattern : mExcludes) {
-            if (pRequestUri.startsWith(excludePattern)) {
-                excluded = true;
-                break;
-            }
-
-        }
-        return excluded;
+    /**
+     * @return the accessTokenRepository
+     */
+    public AccessTokenRepository getAccessTokenRepository() {
+        return mAccessTokenRepository;
     }
 
-    private boolean currentRequestIsIncluded(final String requestUri) {
-        return requestUri.startsWith(mIncludes);
+    /**
+     * @return the userService
+     */
+    public UserRepository getUserRepository() {
+        return mUserRepository;
     }
 
     /**
@@ -195,11 +203,14 @@ public class AuthFilter implements Filter {
         log.debug("init(): pConfig=" + pConfig);
     }
 
-    /**
-     * @return the accessTokenRepository
-     */
-    public AccessTokenRepository getAccessTokenRepository() {
-        return mAccessTokenRepository;
+    private void loadAccessToken(final HttpServletRequest request, final AccessToken pAccessToken) {
+        request.setAttribute("accessToken", pAccessToken);
+    }
+
+    private void loadCurrentUser(final HttpServletRequest request, final AccessToken pAccessToken) {
+        final String userId = pAccessToken.getUserId();
+        final User user = getUserRepository().findOne(userId);
+        request.setAttribute("currentUser", user);
     }
 
     /**
@@ -208,13 +219,6 @@ public class AuthFilter implements Filter {
      */
     public void setAccessTokenRepository(final AccessTokenRepository pAccessTokenRepository) {
         mAccessTokenRepository = pAccessTokenRepository;
-    }
-
-    /**
-     * @return the userService
-     */
-    public UserRepository getUserRepository() {
-        return mUserRepository;
     }
 
     /**
