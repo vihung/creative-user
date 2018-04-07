@@ -49,6 +49,16 @@
                   </div>
                 </div>
 
+
+                <div class="form-group row">
+                  <div class="col-4">
+                    <label class="col-form-label" for="user-mobile"><strong>Mobile</strong></label>
+                  </div>
+                  <div class="col-8">
+                    <input class="form-control-plaintext" readonly id="user-mobile" placeholder="loading...">
+                  </div>
+                </div>
+              
                 <button id="buttonEditProfile" class="btn btn-primary">Edit</button>
                 <input type="submit" id="buttonUpdateProfile" class="btn btn-primary" disabled value="Update">
                 <button id="buttonCancelEditProfile" class="btn btn-primary" disabled>Cancel</button>
@@ -57,22 +67,7 @@
             </div>
           </div>
         </div>
-      </div>
-      <!-- end col -->
-      <div class="col-md-6">
-        <div class="card" id="card-contact">
-          <h5 class="card-header">Contacts</h5>
-          <div class="card-body">
-            <div class="card-text">
-              <dl class="row">
-                <dt class="col-4">Mobile</dt>
-                <dd class="col-8" id="contact-mobile"></dd>
-              </dl>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- end col -->
+      </div><!-- end col -->
       <div class="col-md-6">
         <div class="card" id="card-creds">
           <h5 class="card-header">Credentials</h5>
@@ -121,6 +116,9 @@
           form : $("#formEditProfile")
         }, onFormFieldChange);
         $("#user-nickname").change({
+          form : $("#formEditProfile")
+        }, onFormFieldChange);
+        $("#user-mobile").change({
           form : $("#formEditProfile")
         }, onFormFieldChange);
       });

@@ -44,10 +44,7 @@ function clearUserData() {
   $("#card-user #user-firstName").val("");
   $("#card-user #user-lastName").val("");
   $("#card-user #user-nickname").val("");
-}
-
-function clearContactData() {
-  $("#card-contact #user-mobile").text("");
+  $("#card-user #user-mobile").val("");
 }
 
 function clearCredentialsData() {
@@ -60,11 +57,8 @@ function populateUserData(user) {
     populateFormField($("#card-user #user-firstName"), user.firstName, "first name")
     populateFormField($("#card-user #user-lastName"), user.lastName, "last name")
     populateFormField($("#card-user #user-nickname"), user.nickname, "nickname");
+    populateFormField($("#card-user #user-mobile"), user.mobile, "mobile");
     $("#card-user").show();
-
-    clearContactData()
-    $("#card-contact #contact-mobile").text(user.mobile);
-    $("#card-contact").show();
   }
 }
 
@@ -202,6 +196,7 @@ function onUpdateProfileSuccess(pUser) {
   populateFormField($("#user-firstName"), pUser.firstName);
   populateFormField($("#user-lastName"), pUser.lastName);
   populateFormField($("#user-nickname"), pUser.nickname);
+  populateFormField($("#user-mobile"), pUser.mobile);
   
   disableAndHideButton($("#buttonUpdateProfile"));
   disableAndHideButton($("#buttonCancelEditProfile"));
@@ -231,10 +226,14 @@ function onUpdateProfileFormSubmit(pEvent) {
   var nickname = $form.find('#user-nickname').val();
   console.log("onUpdateProfileFormSubmit(): nickname=" + nickname);
 
+  var mobile = $form.find('#user-mobile').val();
+  console.log("onUpdateProfileFormSubmit(): mobile=" + mobile);
+
   var updateProfileRequest = {
     "firstName" : firstName,
     "lastName" : lastName,
-    "nickname" : nickname
+    "nickname" : nickname,
+    "mobile" : mobile
   }
 
   // AJAX POST to update profile URL

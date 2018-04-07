@@ -5,28 +5,46 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 
 public class UpdateUserRequest {
 
+    private String mFirstName;
+    private String mLastName;
+    private String mMobile;
+    private String mNickname;
+
     public UpdateUserRequest() {
         super();
     }
 
-    private String mFirstName;
-    private String mLastName;
-    private String mNickname;
-    private String mMobile;
-    @Override
-    public String toString() {
-        return ToStringBuilder.reflectionToString(this);
-    }
-
-    @Override
-    public int hashCode() {
-        return HashCodeBuilder.reflectionHashCode(17, 37, this);
-    }
     /**
      * @return the firstName
      */
     public String getFirstName() {
         return mFirstName;
+    }
+
+    /**
+     * @return the lastName
+     */
+    public String getLastName() {
+        return mLastName;
+    }
+
+    /**
+     * @return the mobile
+     */
+    public String getMobile() {
+        return mMobile;
+    }
+
+    /**
+     * @return the nickame
+     */
+    public String getNickname() {
+        return mNickname;
+    }
+
+    @Override
+    public int hashCode() {
+        return HashCodeBuilder.reflectionHashCode(17, 37, this);
     }
 
     /**
@@ -38,13 +56,6 @@ public class UpdateUserRequest {
     }
 
     /**
-     * @return the lastName
-     */
-    public String getLastName() {
-        return mLastName;
-    }
-
-    /**
      * @param pLastName
      *            the lastName to set
      */
@@ -53,10 +64,11 @@ public class UpdateUserRequest {
     }
 
     /**
-     * @return the nickame
+     * @param pMobile
+     *            the mobile to set
      */
-    public String getNickname() {
-        return mNickname;
+    public void setMobile(final String pMobile) {
+        mMobile = pMobile;
     }
 
     /**
@@ -67,19 +79,9 @@ public class UpdateUserRequest {
         mNickname = pNickame;
     }
 
-    /**
-     * @return the mobile
-     */
-    public String getMobile() {
-        return mMobile;
-    }
-
-    /**
-     * @param pMobile
-     *            the mobile to set
-     */
-    public void setMobile(final String pMobile) {
-        mMobile = pMobile;
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
     }
 
 }

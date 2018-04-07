@@ -331,6 +331,7 @@ public class UserController {
             user.setFirstName(pUpdateUserRequest.getFirstName());
             user.setLastName(pUpdateUserRequest.getLastName());
             user.setNickname(pUpdateUserRequest.getNickname());
+            user.setMobile(pUpdateUserRequest.getMobile());
             user = getUserService().save(user);
             return new ResponseEntity(user, HttpStatus.OK);
         }

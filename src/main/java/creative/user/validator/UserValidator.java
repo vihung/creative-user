@@ -72,6 +72,8 @@ public class UserValidator {
             requestValid = false;
         } else if (!validateStringField(pUpdateUserRequest.getNickname())) {
             requestValid = false;
+        } else if (!validateStringField(pUpdateUserRequest.getMobile())) {
+            requestValid = false;
         }
 
         return requestValid;
