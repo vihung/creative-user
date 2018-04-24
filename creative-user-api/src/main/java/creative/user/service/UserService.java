@@ -8,31 +8,36 @@ import creative.user.model.User;
 import creative.user.model.UserCredentials;
 
 public interface UserService {
+    /**
+     * Create an {@link AccessToken} for the given user at the given client host and address.
+     *
+     * @param pUser
+     *            the user
+     * @param pClientAddress
+     *            the client IP address
+     * @param pClientHostName
+     *            the client hostname
+     * @return the {@link AccessToken}
+     */
+    public AccessToken createAccessToken(User pUser, String pClientAddress, String pClientHostName);
 
-    boolean checkEmailExists(String pEmail);
+    /**
+     * Find the {@link UserCredentials} for a given user, by user id.
+     *
+     * @param pUserId
+     *            the user id
+     * @return {@link UserCredentials, or <code>null</code> if not found
+     */
+    public UserCredentials findUserCredentialsByUserId(String pUserId);
 
-    boolean checkNicknameExists(String pNickname);
+    public User getUser(String pUserId);
 
-    AccessToken createAccessToken(User pUser, String pClientAddress, String pClientHostName);
+    public User login(LoginRequest pLoginRequest) throws InvalidLoginRequestException, UnknownEmailException, IncorrectPasswordException;
 
-    User findUserByNickname(String pNickname);
+    public void logout(AccessToken pAccessToken);
 
-    UserCredentials findUserCredentialsByEmail(String pEmail);
+    public User registerUser(RegistrationRequest pRegistrationRequest)
+            throws InvalidRegistrationRequestException, DuplicateEmailException, DuplicateNicknameException;
 
-    UserCredentials findUserCredentialsByUserId(String pUserId);
-
-    User getUser(String pUserId);
-
-    AccessToken save(AccessToken pAccessToken);
-
-    User save(User pUser);
-
-    UserCredentials save(UserCredentials pCreds);
-
-    boolean validateLoginRequest(LoginRequest pLoginRequest);
-
-    boolean validateRegistrationRequest(RegistrationRequest pRegistrationRequest);
-
-    boolean validateUpdateUserRequest(UpdateUserRequest pUpdateUserRequest);
-
+    public User updateCurrentUser(User pUser, UpdateUserRequest pUpdateUserRequest) throws InvalidUpdateUserRequestException;
 }
