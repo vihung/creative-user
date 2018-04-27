@@ -1,6 +1,11 @@
+package creative.user.model
+
+import org.junit.Test
+
 class UserSpec extends spock.lang.Specification {
     creative.user.model.User u = new creative.user.model.User();
 
+    @Test
     def 'Set and Get Id'(){
         given:
         u != null;
@@ -12,6 +17,8 @@ class UserSpec extends spock.lang.Specification {
         u.id == '1234';
     }
 
+
+    @Test
     def 'Set and Get First Name'(){
         given:
         u != null;
@@ -23,6 +30,7 @@ class UserSpec extends spock.lang.Specification {
         u.firstName == 'Vihung';
     }
 
+    @Test
     def 'Set and Get Last Name'(){
         given:
         u != null;
@@ -34,6 +42,7 @@ class UserSpec extends spock.lang.Specification {
         u.lastName == 'Marathe';
     }
 
+    @Test
     def 'Set and Get Nickname'(){
         given:
         u != null;
@@ -45,6 +54,7 @@ class UserSpec extends spock.lang.Specification {
         u.nickname == 'vmarathe';
     }
 
+    @Test
     def 'Set and Get Mobile'(){
         given:
         u != null;
