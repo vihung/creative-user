@@ -168,11 +168,10 @@ public class UserServiceImpl implements UserService {
         user.setLastName(pRegistrationRequest.getLastName());
         user.setNickname(nickname);
         user.setMobile(pRegistrationRequest.getMobile());
-        log.debug("registerUser(): user=" + user);
-        final User pUser = user;
+        log.debug("registerUser(): Saving user=" + user);
 
-        user = getUserRepository().save(pUser);
-        log.debug("registerUser(): user=" + user);
+        user = getUserRepository().save(user);
+        log.debug("registerUser(): Saved user=" + user);
 
         UserCredentials creds = new UserCredentials();
         creds.setEmail(email);
