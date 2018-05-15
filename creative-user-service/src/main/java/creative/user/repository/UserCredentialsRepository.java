@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
@@ -76,15 +77,24 @@ public class UserCredentialsRepository {
     }
 
     public UserCredentials findByEmail(final String pEmail) {
-        final DynamoDBMapper mapper = new DynamoDBMapper(client);
         log.debug("findByEmail(): Invoked. pEmail=" + pEmail);
+
+        final DynamoDBMapper mapper = new DynamoDBMapper(client);
         final Map<String, AttributeValue> eav = new HashMap<String, AttributeValue>();
         eav.put(":email", new AttributeValue().withS(pEmail));
 
-        final DynamoDBScanExpression scanExpression = new DynamoDBScanExpression().withFilterExpression("email = :email").withExpressionAttributeValues(eav);
+        // // TODO: replace with query instead of scan
+        // final DynamoDBScanExpression scanExpression = new DynamoDBScanExpression().withFilterExpression("email = :email").withExpressionAttributeValues(eav);
+        //
+        // log.debug("findByEmail(): scanExpression=" + scanExpression);
+        // final List<UserCredentials> userCredentialsList = mapper.scan(UserCredentials.class, scanExpression);
 
-        log.debug("findByEmail(): scanExpression=" + scanExpression);
-        final List<UserCredentials> userCredentialsList = mapper.scan(UserCredentials.class, scanExpression);
+        final DynamoDBQueryExpression<UserCredentials> queryExpression = new DynamoDBQueryExpression<UserCredentials>().withIndexName("EmailIndex")
+                .withKeyConditionExpression("email = :email").withExpressionAttributeValues(eav).withConsistentRead(false);
+
+        final List<UserCredentials> userCredentialsList = mapper.query(UserCredentials.class, queryExpression);
+
+        log.debug("findByEmail(): Found " + userCredentialsList.size() + " matching credentials");
 
         UserCredentials userCredentials;
         if (userCredentialsList.isEmpty()) {
@@ -98,8 +108,9 @@ public class UserCredentialsRepository {
     }
 
     public UserCredentials findByUserId(final String pUserId) {
-        final DynamoDBMapper mapper = new DynamoDBMapper(client);
         log.debug("findByUserId(): Invoked. pUserId=" + pUserId);
+
+        final DynamoDBMapper mapper = new DynamoDBMapper(client);
         final Map<String, AttributeValue> eav = new HashMap<String, AttributeValue>();
         eav.put(":userId", new AttributeValue().withS(pUserId));
 
