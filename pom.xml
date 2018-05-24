@@ -26,6 +26,6 @@
 		<module>creative-user-web</module>
 		<module>creative-user-app</module>
 		<module>creative-user-test</module>
-    <module>creative-user-import</module>
+		<module>creative-user-import</module>
   </modules>
 </project>
