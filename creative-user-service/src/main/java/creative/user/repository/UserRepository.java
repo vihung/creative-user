@@ -81,13 +81,6 @@ public class UserRepository {
         final Map<String, AttributeValue> eav = new HashMap<String, AttributeValue>();
         eav.put(":nickname", new AttributeValue().withS(pNickname));
 
-        // // TODO: replace with query instead of scan
-        // final DynamoDBScanExpression scanExpression = new DynamoDBScanExpression().withFilterExpression("nickname = :nickname")
-        // .withExpressionAttributeValues(eav);
-        //
-        // log.debug("findByNickname(): scanExpression=" + scanExpression);
-        // List<User> users = mapper.scan(User.class, scanExpression);
-
         final DynamoDBQueryExpression<User> queryExpression = new DynamoDBQueryExpression<User>().withIndexName("NicknameIndex")
                 .withKeyConditionExpression("nickname = :nickname").withExpressionAttributeValues(eav).withConsistentRead(false);
 

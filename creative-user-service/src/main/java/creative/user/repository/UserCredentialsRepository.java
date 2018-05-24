@@ -83,12 +83,6 @@ public class UserCredentialsRepository {
         final Map<String, AttributeValue> eav = new HashMap<String, AttributeValue>();
         eav.put(":email", new AttributeValue().withS(pEmail));
 
-        // // TODO: replace with query instead of scan
-        // final DynamoDBScanExpression scanExpression = new DynamoDBScanExpression().withFilterExpression("email = :email").withExpressionAttributeValues(eav);
-        //
-        // log.debug("findByEmail(): scanExpression=" + scanExpression);
-        // final List<UserCredentials> userCredentialsList = mapper.scan(UserCredentials.class, scanExpression);
-
         final DynamoDBQueryExpression<UserCredentials> queryExpression = new DynamoDBQueryExpression<UserCredentials>().withIndexName("EmailIndex")
                 .withKeyConditionExpression("email = :email").withExpressionAttributeValues(eav).withConsistentRead(false);
 
