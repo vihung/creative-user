@@ -1,7 +1,7 @@
 /**
  *
  */
-package creative.user.ddl;
+package creative.user.ddl.table;
 
 import java.util.ArrayList;
 
@@ -11,25 +11,30 @@ import org.apache.commons.logging.LogFactory;
 import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
 import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
 import com.amazonaws.services.dynamodbv2.model.DeleteTableRequest;
+import com.amazonaws.services.dynamodbv2.model.GlobalSecondaryIndex;
 import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
 import com.amazonaws.services.dynamodbv2.model.KeyType;
+import com.amazonaws.services.dynamodbv2.model.Projection;
+import com.amazonaws.services.dynamodbv2.model.ProjectionType;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
+
+import creative.user.ddl.DynamoDDLCommand;
 
 /**
  * @author Vihung Marathe
  *
  */
-public class AccessTokenDDL extends DynamoDDLCommand {
-    private static final String KEY_NAME = "tokenValue";
+public class UserDDL extends DynamoDDLCommand {
+    private static final String KEY_NAME = "id";
 
     private static final String KEY_TYPE = "S";
 
     // Logger for this class
-    private static final Log log = LogFactory.getLog(AccessTokenDDL.class);
+    private static final Log log = LogFactory.getLog(UserDDL.class);
 
-    private static final String TABLE_NAME = "AccessToken";
+    private static final String TABLE_NAME = "User";
 
-    public AccessTokenDDL() {
+    public UserDDL() {
         super();
     }
 
@@ -49,11 +54,19 @@ public class AccessTokenDDL extends DynamoDDLCommand {
         final ArrayList<KeySchemaElement> tableKeySchema = new ArrayList<KeySchemaElement>();
         tableKeySchema.add(new KeySchemaElement().withAttributeName(KEY_NAME).withKeyType(KeyType.HASH));
 
+        final ArrayList<KeySchemaElement> indexKeySchema = new ArrayList<KeySchemaElement>();
+        indexKeySchema.add(new KeySchemaElement().withAttributeName("nickname").withKeyType(KeyType.HASH));
+
         final ArrayList<AttributeDefinition> attributeDefinitions = new ArrayList<AttributeDefinition>();
         attributeDefinitions.add(new AttributeDefinition().withAttributeName(KEY_NAME).withAttributeType(KEY_TYPE));
+        attributeDefinitions.add(new AttributeDefinition().withAttributeName("nickname").withAttributeType("S"));
+
+        final GlobalSecondaryIndex nicknameIndex = new GlobalSecondaryIndex().withIndexName("NicknameIndex")
+                .withProvisionedThroughput(new ProvisionedThroughput().withReadCapacityUnits(10L).withWriteCapacityUnits(1L))
+                .withProjection(new Projection().withProjectionType(ProjectionType.ALL)).withKeySchema(indexKeySchema);
 
         final CreateTableRequest createTableRequest = new CreateTableRequest().withTableName(TABLE_NAME).withKeySchema(tableKeySchema)
-                .withAttributeDefinitions(attributeDefinitions)
+                .withGlobalSecondaryIndexes(nicknameIndex).withAttributeDefinitions(attributeDefinitions)
                 .withProvisionedThroughput(new ProvisionedThroughput().withReadCapacityUnits(10L).withWriteCapacityUnits(5L));
 
         client.createTable(createTableRequest);

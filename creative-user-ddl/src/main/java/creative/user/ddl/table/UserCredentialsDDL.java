@@ -1,7 +1,7 @@
 /**
  *
  */
-package creative.user.ddl;
+package creative.user.ddl.table;
 
 import java.util.ArrayList;
 
@@ -17,6 +17,8 @@ import com.amazonaws.services.dynamodbv2.model.KeyType;
 import com.amazonaws.services.dynamodbv2.model.Projection;
 import com.amazonaws.services.dynamodbv2.model.ProjectionType;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
+
+import creative.user.ddl.DynamoDDLCommand;
 
 /**
  * @author Vihung Marathe
