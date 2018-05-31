@@ -9,7 +9,7 @@ class CreativeUserClient {
     public static final String URL_LOGIN = URL_BASE + "/session/new";
     public static final String URL_CURRENT_USER = URL_BASE + "/user/current";
 
-    private static RESTClient client = new RESTClient(URL_BASE);
+    def client = new RESTClient(URL_BASE);
 
     /**
      *

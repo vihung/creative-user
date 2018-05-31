@@ -43,26 +43,22 @@ class UserSpec {
         assert user.lastName == "Johnson"
         assert user.nickname == "bjohnson"
     }
+
     @Test
     public void anonymousCurrentUser() {
         def client = new CreativeUserClient()
 
         when: "I am not logged in as a valid user"
+        def resp = client.login("foo", "bar")
 
         and: 'I get current user details'
-        def resp=client.getCurrentUser();
+        resp=client.getCurrentUser();
         assert resp;
 
-        then: "I should get an OK  response"
-        assert resp.status == HttpStatus.SC_OK
+        then: "I should get an unauthorised response"
+        assert resp.status == HttpStatus.SC_UNAUTHORIZED
 
-        and:"I should get the logged in user details back in the response"
-        assert resp.responseData
-
-        and: "The user should be logged in"
-        def user=resp.responseData
-        assert user.firstName == "Brandon"
-        assert user.lastName == "Johnson"
-        assert user.nickname == "bjohnson"
+        and:"I should get the no details back in the response"
+        assert resp.responseData==null
     }
 }

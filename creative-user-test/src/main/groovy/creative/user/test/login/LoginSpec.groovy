@@ -30,7 +30,10 @@ class LoginSpec {
         assert resp
 
         then: "I should get an unauthorised error response"
-        assert resp.status == HttpStatus.SC_UNAUTHORIZED
+        resp.status == HttpStatus.SC_UNAUTHORIZED
+
+        and: "I should not have an Access Token cookie"
+        !resp.getHeaders('Set-Cookie')
     }
 
     @Test
@@ -42,7 +45,7 @@ class LoginSpec {
         assert resp
 
         then: "I should get an unauthorised error response"
-        assert resp.status == HttpStatus.SC_UNAUTHORIZED
+        resp.status == HttpStatus.SC_UNAUTHORIZED
     }
 
     @Test
@@ -54,15 +57,20 @@ class LoginSpec {
         assert resp
 
         then: "I should get a created success response"
-        assert resp.status == HttpStatus.SC_CREATED
+        resp.status == HttpStatus.SC_CREATED
 
         and:"I should get the logged in user back in the response"
-        assert resp.responseData
+        resp.responseData
+
+        and: "I should have an Access Token cookie"
+        resp.getHeaders('Set-Cookie').each {
+            assert it.value.toString().startsWith("ACCESS_TOKEN=");
+        }
 
         and: "The user should be logged in"
         def user=resp.responseData
-        assert user.firstName == "Brandon"
-        assert user.lastName == "Johnson"
-        assert user.nickname == "bjohnson"
+        user.firstName == "Brandon"
+        user.lastName == "Johnson"
+        user.nickname == "bjohnson"
     }
 }
