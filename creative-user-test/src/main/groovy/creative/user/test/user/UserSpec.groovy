@@ -6,17 +6,18 @@ import org.junit.Before
 import org.junit.Test
 
 import creative.user.test.CreativeUserClient
+import creative.user.test.CreativeUserInit
 
 class UserSpec {
 
     @Before
     public void setUp() throws Exception {
-        //        CreativeUserInit.setUp()
+        CreativeUserInit.setUp()
     }
 
     @After
     public void tearDown() throws Exception {
-        //        CreativeUserInit.tearDown()
+        CreativeUserInit.tearDown()
     }
 
     @Test

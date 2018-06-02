@@ -7,9 +7,38 @@ class CreativeUserClient {
     private static final URL_BASE="http://localhost:8080/api";
 
     public static final String URL_LOGIN = URL_BASE + "/session/new";
+    public static final String URL_REGISTER = URL_BASE + "/user/new";
     public static final String URL_CURRENT_USER = URL_BASE + "/user/current";
 
     def client = new RESTClient(URL_BASE);
+
+    /**
+     *
+     * @param pUsername
+     * @param pPassword
+     * @return
+     */
+    public register(pFirstName, pLastName, pNickname, pEmail, pPassword) {
+        println("register(): Invoked")
+        def request = [firstName: pFirstName, lastName: pLastName, nickname: pNickname, email: pEmail, password: pPassword];
+        println("register(): request=" + request);
+
+        if(client == null) client = new RESTClient(URL_REGISTER);
+
+        try {
+            def response = client.put(
+                    requestContentType : ContentType.JSON,
+                    path: URL_REGISTER,
+                    body: request
+                    );
+            println("register(): response=" + response)
+            return response;
+        } catch(e) {
+            println("register(): " + e);
+            return e.response;
+        }
+    }
+
 
     /**
      *
@@ -37,7 +66,6 @@ class CreativeUserClient {
             return e.response;
         }
     }
-
     public getCurrentUser() {
 
         if(client == null)  client = new RESTClient(URL_CURRENT_USER);

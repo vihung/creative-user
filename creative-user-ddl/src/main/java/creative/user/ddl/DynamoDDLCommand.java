@@ -17,6 +17,7 @@ import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
+import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 
 /**
  * @author vihung
@@ -40,7 +41,11 @@ public abstract class DynamoDDLCommand {
         boolean success;
         try {
             preClean();
-            doClean();
+            try {
+                doClean();
+            } catch (final ResourceNotFoundException e) {
+                log.debug("Table " + getName() + " not found. Ignoring...");
+            }
             postClean();
 
             success = true;

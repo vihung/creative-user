@@ -230,15 +230,16 @@ public class UserController {
             return new ResponseEntity(user, HttpStatus.CREATED);
 
         } catch (final InvalidRegistrationRequestException e) {
-
             final String messageKey = "ERR_REGISTRATION_REQUEST_INVALID";
             final String messageValue = messageSource.getMessage(messageKey, new Object[] {}, mRequest.getLocale());
+            log.error("registerUser(): messageValue=" + messageValue);
             final ErrorResponse errorResponse = new ErrorResponse(messageKey, messageValue);
             return new ResponseEntity(errorResponse, HttpStatus.BAD_REQUEST);
         } catch (final DuplicateEmailException e) {
             final String email = pRegistrationRequest.getEmail();
             final String messageKey = "ERR_EMAIL_EXISTS";
             final String messageValue = messageSource.getMessage(messageKey, new Object[] { email }, mRequest.getLocale());
+            log.error("registerUser(): messageValue=" + messageValue);
             final ErrorResponse errorResponse = new ErrorResponse(messageKey, messageValue);
             return new ResponseEntity(errorResponse, HttpStatus.CONFLICT);
         } catch (final DuplicateNicknameException e) {
@@ -246,12 +247,14 @@ public class UserController {
             final String messageKey = "ERR_NICKNAME_EXISTS";
             final String messageValue = messageSource.getMessage(messageKey, new Object[] { nickname }, mRequest.getLocale());
             final ErrorResponse errorResponse = new ErrorResponse(messageKey, messageValue);
+            log.error("registerUser(): messageValue=" + messageValue);
             return new ResponseEntity(errorResponse, HttpStatus.CONFLICT);
         } catch (final Exception e) {
             log.error("Error registering user", e);
             final String messageKey = "ERR_REGISTRATION";
             final String messageValue = messageSource.getMessage(messageKey, new Object[] {}, mRequest.getLocale());
             final ErrorResponse errorResponse = new ErrorResponse(messageKey, messageValue);
+            log.error("registerUser(): messageValue=" + messageValue);
             return new ResponseEntity(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

@@ -4,6 +4,8 @@
 package creative.user.validator;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Service;
 
 import creative.user.model.LoginRequest;
@@ -16,6 +18,8 @@ import creative.user.model.UpdateUserRequest;
  */
 @Service
 public class UserValidator {
+    // Logger for this class
+    private static final Log log = LogFactory.getLog(UserValidator.class);
 
     /**
      *
@@ -40,16 +44,21 @@ public class UserValidator {
         boolean requestValid = true;
 
         if (!validateStringField(pRegistrationRequest.getFirstName())) {
+            log.debug("validateRegistrationRequest(): No First Name");
             requestValid = false;
         } else if (!validateStringField(pRegistrationRequest.getLastName())) {
+            log.debug("validateRegistrationRequest(): No Last Name");
             requestValid = false;
         } else if (!validateStringField(pRegistrationRequest.getNickname())) {
+            log.debug("validateRegistrationRequest(): No Nickname");
             requestValid = false;
-        } else if (!validateStringField(pRegistrationRequest.getMobile())) {
-            requestValid = false;
+            // } else if (!validateStringField(pRegistrationRequest.getMobile())) {
+            // requestValid = false;
         } else if (!validateStringField(pRegistrationRequest.getEmail())) {
+            log.debug("validateRegistrationRequest(): No Email");
             requestValid = false;
         } else if (!validateStringField(pRegistrationRequest.getPassword())) {
+            log.debug("validateRegistrationRequest(): No Password");
             requestValid = false;
         }
 

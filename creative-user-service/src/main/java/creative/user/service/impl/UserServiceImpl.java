@@ -152,6 +152,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User registerUser(final RegistrationRequest pRegistrationRequest)
             throws InvalidRegistrationRequestException, DuplicateEmailException, DuplicateNicknameException {
+        log.debug("registerUser(): Invoked");
         final boolean requestValid = getUserValidator().validateRegistrationRequest(pRegistrationRequest);
         if (!requestValid) throw new InvalidRegistrationRequestException();
 
