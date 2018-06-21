@@ -37,196 +37,195 @@ import creative.user.repository.UserRepository;
 @Component
 public class AuthFilter implements Filter {
 
-    // Logger for this class
-    private static final Log log = LogFactory.getLog(AuthFilter.class);
+  // Logger for this class
+  private static final Log log = LogFactory.getLog(AuthFilter.class);
 
-    @Autowired
-    private AccessTokenRepository mAccessTokenRepository;
+  @Autowired
+  private AccessTokenRepository mAccessTokenRepository;
 
-    @Value("${authfilter.protected.excludes}")
-    private String[] mExcludes;
+  @Value("${authfilter.protected.excludes}")
+  private String[] mExcludes;
 
-    @Value("${authfilter.protected.includes}")
-    private String mIncludes;
+  @Value("${authfilter.protected.includes}")
+  private String mIncludes;
 
-    @Autowired
-    private UserRepository mUserRepository;
+  @Autowired
+  private UserRepository mUserRepository;
 
-    /**
-     *
-     */
-    public AuthFilter() {
-        super();
-    }
+  /**
+   *
+   */
+  public AuthFilter() {
+    super();
+  }
 
-    private boolean currentRequestIsExcluded(final String pRequestUri) {
-        boolean excluded = false;
+  private boolean currentRequestIsExcluded(final String pRequestUri) {
+    boolean excluded = false;
 
-        for (final String excludePattern : mExcludes) {
-            if (pRequestUri.startsWith(excludePattern)) {
-                excluded = true;
-                break;
-            }
-
-        }
-        return excluded;
-    }
-
-    private boolean currentRequestIsIncluded(final String requestUri) {
-        return requestUri.startsWith(mIncludes);
-    }
-
-    /**
-     * @see javax.servlet.Filter#destroy()
-     */
-    @Override
-    public void destroy() {
-        log.debug("destroy(): Invoked");
+    for (final String excludePattern : mExcludes) {
+      if (pRequestUri.startsWith(excludePattern)) {
+        excluded = true;
+        break;
+      }
 
     }
+    return excluded;
+  }
 
-    /**
-     * @see javax.servlet.Filter#doFilter(javax.servlet.ServletRequest, javax.servlet.ServletResponse, javax.servlet.FilterChain)
-     */
-    @Override
-    public void doFilter(final ServletRequest pRequest, final ServletResponse pResponse, final FilterChain pChain) throws IOException, ServletException {
-        // Convert to HTTP-specific objects
-        final HttpServletRequest request = (HttpServletRequest) pRequest;
-        final HttpServletResponse response = (HttpServletResponse) pResponse;
-        final String requestUri = request.getRequestURI();
+  private boolean currentRequestIsIncluded(final String requestUri) {
+    return requestUri.startsWith(mIncludes);
+  }
 
-        final Locale locale = request.getLocale();
-        log.debug("doFilter(): locale=" + locale);
+  /**
+   * @see javax.servlet.Filter#destroy()
+   */
+  public void destroy() {
+    log.debug("destroy(): Invoked");
 
-        final boolean included = currentRequestIsIncluded(requestUri);
-        final boolean excluded = currentRequestIsExcluded(requestUri);
+  }
 
-        if (excluded || !included) {
-            log.debug("doFilter(): Not Applying Auth Logic for " + requestUri);
-            pChain.doFilter(pRequest, pResponse);
+  /**
+   * @see javax.servlet.Filter#doFilter(javax.servlet.ServletRequest,
+   *      javax.servlet.ServletResponse, javax.servlet.FilterChain)
+   */
+  public void doFilter(final ServletRequest pRequest, final ServletResponse pResponse, final FilterChain pChain)
+      throws IOException, ServletException {
+    // Convert to HTTP-specific objects
+    final HttpServletRequest request = (HttpServletRequest) pRequest;
+    final HttpServletResponse response = (HttpServletResponse) pResponse;
+    final String requestUri = request.getRequestURI();
+
+    final Locale locale = request.getLocale();
+    log.debug("doFilter(): locale=" + locale);
+
+    final boolean included = currentRequestIsIncluded(requestUri);
+    final boolean excluded = currentRequestIsExcluded(requestUri);
+
+    if (excluded || !included) {
+      log.debug("doFilter(): Not Applying Auth Logic for " + requestUri);
+      pChain.doFilter(pRequest, pResponse);
+    } else {
+      // for protected requests
+      log.debug("doFilter(): Applying Auth Logic for " + requestUri);
+
+      // check if user has cookie
+      final Cookie atCookie = extractAccessTokenCookie(request);
+      if (atCookie == null) {
+        log.debug("doFilter(): No Access Token cookie on request");
+        // if not, return unauthorized response
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+      } else {
+        // if yes, then load access token
+        final String tokenValue = atCookie.getValue();
+        log.debug("doFilter(): Cookie found. tokenValue=" + tokenValue);
+        final AccessToken accessToken = getAccessTokenRepository().findOne(tokenValue);
+
+        // check expiry
+        final long expiryTimestamp = accessToken.getExpiryTimestamp();
+        log.debug("doFilter(): Server-side expiryTimestamp=" + new Date(expiryTimestamp));
+        final long now = System.currentTimeMillis();
+        if (expiryTimestamp <= now) {
+          log.debug("doFilter(): Access Token expired");
+          // if invalid, expire cookie,
+          // ensure client cookie also expired
+          atCookie.setMaxAge(0);
+          response.addCookie(atCookie);
+          // send UNAUTHORIZED response
+          response.setStatus(HttpStatus.UNAUTHORIZED.value());
         } else {
-            // for protected requests
-            log.debug("doFilter(): Applying Auth Logic for " + requestUri);
+          log.debug("doFilter(): Access token present and not expired");
+          // if valid, then extend expiry on token
+          final Calendar expiry = Calendar.getInstance();
+          log.debug("doFilter(): now=" + expiry);
+          expiry.add(Calendar.DAY_OF_MONTH, 7);
+          log.debug("doFilter(): Updating access token with new expiry=" + expiry);
+          accessToken.setExpiryTimestamp(expiry.getTimeInMillis());
+          accessToken.setClientAddress(request.getRemoteAddr());
+          accessToken.setClientHostname(request.getRemoteHost());
+          getAccessTokenRepository().save(accessToken);
 
-            // check if user has cookie
-            final Cookie atCookie = extractAccessTokenCookie(request);
-            if (atCookie == null) {
-                log.debug("doFilter(): No Access Token cookie on request");
-                // if not, return unauthorized response
-                response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            } else {
-                // if yes, then load access token
-                final String tokenValue = atCookie.getValue();
-                log.debug("doFilter(): Cookie found. tokenValue=" + tokenValue);
-                final AccessToken accessToken = getAccessTokenRepository().findOne(tokenValue);
+          // extend expiry on cookie
+          // 7 days in seconds
+          final int maxAge = 7 * 24 * 60 * 60;
+          atCookie.setMaxAge(maxAge);
+          atCookie.setPath("/");
+          response.addCookie(atCookie);
 
-                // check expiry
-                final long expiryTimestamp = accessToken.getExpiryTimestamp();
-                log.debug("doFilter(): Server-side expiryTimestamp=" + new Date(expiryTimestamp));
-                final long now = System.currentTimeMillis();
-                if (expiryTimestamp <= now) {
-                    log.debug("doFilter(): Access Token expired");
-                    // if invalid, expire cookie,
-                    // ensure client cookie also expired
-                    atCookie.setMaxAge(0);
-                    response.addCookie(atCookie);
-                    // send UNAUTHORIZED response
-                    response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                } else {
-                    log.debug("doFilter(): Access token present and not expired");
-                    // if valid, then extend expiry on token
-                    final Calendar expiry = Calendar.getInstance();
-                    log.debug("doFilter(): now=" + expiry);
-                    expiry.add(Calendar.DAY_OF_MONTH, 7);
-                    log.debug("doFilter(): Updating access token with new expiry=" + expiry);
-                    accessToken.setExpiryTimestamp(expiry.getTimeInMillis());
-                    accessToken.setClientAddress(request.getRemoteAddr());
-                    accessToken.setClientHostname(request.getRemoteHost());
-                    getAccessTokenRepository().save(accessToken);
-
-                    // extend expiry on cookie
-                    // 7 days in seconds
-                    final int maxAge = 7 * 24 * 60 * 60;
-                    atCookie.setMaxAge(maxAge);
-                    atCookie.setPath("/");
-                    response.addCookie(atCookie);
-
-                    // load current user
-                    loadCurrentUser(request, accessToken);
-                    loadAccessToken(request, accessToken);
-                    pChain.doFilter(pRequest, pResponse);
-                }
-                log.debug("doFilter(): Returning");
-            }
+          // load current user
+          loadCurrentUser(request, accessToken);
+          loadAccessToken(request, accessToken);
+          pChain.doFilter(pRequest, pResponse);
         }
+        log.debug("doFilter(): Returning");
+      }
     }
+  }
 
-    private Cookie extractAccessTokenCookie(final HttpServletRequest request) {
-        Cookie atCookie = null;
-        final Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (final Cookie cookie : cookies) {
-                final String name = cookie.getName();
-                final String value = cookie.getValue();
-                final int maxAge = cookie.getMaxAge();
+  private Cookie extractAccessTokenCookie(final HttpServletRequest request) {
+    Cookie atCookie = null;
+    final Cookie[] cookies = request.getCookies();
+    if (cookies != null) {
+      for (final Cookie cookie : cookies) {
+        final String name = cookie.getName();
+        final String value = cookie.getValue();
+        final int maxAge = cookie.getMaxAge();
 
-                if ("ACCESS_TOKEN".equals(name)) {
-                    atCookie = cookie;
-                    break;
-                }
-            }
+        if ("ACCESS_TOKEN".equals(name)) {
+          atCookie = cookie;
+          break;
         }
-        log.debug("hasAccessTokenCookie(): Returning atCookie=" + atCookie);
-        return atCookie;
+      }
     }
+    log.debug("hasAccessTokenCookie(): Returning atCookie=" + atCookie);
+    return atCookie;
+  }
 
-    /**
-     * @return the accessTokenRepository
-     */
-    public AccessTokenRepository getAccessTokenRepository() {
-        return mAccessTokenRepository;
-    }
+  /**
+   * @return the accessTokenRepository
+   */
+  public AccessTokenRepository getAccessTokenRepository() {
+    return mAccessTokenRepository;
+  }
 
-    /**
-     * @return the userService
-     */
-    public UserRepository getUserRepository() {
-        return mUserRepository;
-    }
+  /**
+   * @return the userService
+   */
+  public UserRepository getUserRepository() {
+    return mUserRepository;
+  }
 
-    /**
-     * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
-     */
-    @Override
-    public void init(final FilterConfig pConfig) throws ServletException {
-        log.debug("init(): Invoked");
-        log.debug("init(): pConfig=" + pConfig);
-    }
+  /**
+   * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
+   */
+  public void init(final FilterConfig pConfig) throws ServletException {
+    log.debug("init(): Invoked");
+    log.debug("init(): pConfig=" + pConfig);
+  }
 
-    private void loadAccessToken(final HttpServletRequest request, final AccessToken pAccessToken) {
-        request.setAttribute("accessToken", pAccessToken);
-    }
+  private void loadAccessToken(final HttpServletRequest request, final AccessToken pAccessToken) {
+    request.setAttribute("accessToken", pAccessToken);
+  }
 
-    private void loadCurrentUser(final HttpServletRequest request, final AccessToken pAccessToken) {
-        final String userId = pAccessToken.getUserId();
-        final User user = getUserRepository().findOne(userId);
-        request.setAttribute("currentUser", user);
-    }
+  private void loadCurrentUser(final HttpServletRequest request, final AccessToken pAccessToken) {
+    final String userId = pAccessToken.getUserId();
+    final User user = getUserRepository().findOne(userId);
+    request.setAttribute("currentUser", user);
+  }
 
-    /**
-     * @param pAccessTokenRepository
-     *            the accessTokenRepository to set
-     */
-    public void setAccessTokenRepository(final AccessTokenRepository pAccessTokenRepository) {
-        mAccessTokenRepository = pAccessTokenRepository;
-    }
+  /**
+   * @param pAccessTokenRepository
+   *          the accessTokenRepository to set
+   */
+  public void setAccessTokenRepository(final AccessTokenRepository pAccessTokenRepository) {
+    mAccessTokenRepository = pAccessTokenRepository;
+  }
 
-    /**
-     * @param pUserRepository
-     *            the userService to set
-     */
-    public void setUserRepository(final UserRepository pUserRepository) {
-        mUserRepository = pUserRepository;
-    }
+  /**
+   * @param pUserRepository
+   *          the userService to set
+   */
+  public void setUserRepository(final UserRepository pUserRepository) {
+    mUserRepository = pUserRepository;
+  }
 
 }
