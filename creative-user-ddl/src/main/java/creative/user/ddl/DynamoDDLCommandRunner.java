@@ -28,7 +28,7 @@ public class DynamoDDLCommandRunner {
         for (final DynamoDDLCommand command : getCommands()) {
             boolean success;
             success = command.run();
-            System.out.println(command.getName() + " Cleaned " + (success ? "successfully" : "unsuccessfully"));
+            System.out.println(command.getName() + " Created " + (success ? "successfully" : "unsuccessfully"));
         }
     }
 

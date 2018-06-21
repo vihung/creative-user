@@ -8,21 +8,23 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 
 @Configuration
 public class DynamoDBConfig {
 
-    @Value("${amazon.aws.accesskey}")
+    @Value("${AWS_ACCESS_KEY_ID}")
     private String amazonAWSAccessKey;
 
-    @Value("${amazon.aws.secretkey}")
+    @Value("${AWS_SECRET_ACCESS_KEY}")
     private String amazonAWSSecretKey;
 
-    @Value("${amazon.dynamodb.endpoint}")
+    @Value("${AWS_DYNAMODB_ENDPOINT}")
     private String amazonDynamoDBEndpoint;
+
+    @Value("${AWS_REGION}")
+    private String amazonRegion; // = Regions.DEFAULT_REGION.getName();
 
     @Bean
     public AWSCredentialsProvider amazonAWSCredentialsProvider() {
@@ -46,7 +48,7 @@ public class DynamoDBConfig {
     @Bean
     public AmazonDynamoDB amazonDynamoDB() {
         final AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().withCredentials(amazonAWSCredentialsProvider())
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(amazonDynamoDBEndpoint, Regions.DEFAULT_REGION.getName())).build();
+                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(amazonDynamoDBEndpoint, amazonRegion)).build();
 
         return client;
     }

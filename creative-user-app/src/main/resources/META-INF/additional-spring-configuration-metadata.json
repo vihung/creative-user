@@ -1,0 +1,14 @@
+{
+	"properties": [
+		{
+			"name": "authfilter.protected.includes",
+			"type": "java.lang.String",
+			"description": "A list of URLs or URL prefixes to be explicitly checked for authorisation"
+		},
+		{
+			"name": "authfilter.protected.excludes",
+			"type": "java.lang.String",
+			"description": "A list of URLs or URL prefixes to be explicitly not checked for authorisation"
+		}
+	]
+}
